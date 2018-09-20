@@ -1,0 +1,6 @@
+The first input is the location of TAR file.
+The second input is the location where the the file need to be untared.
+Then run the script.
+hdfs namenode -format
+start-all.sh
+jps
