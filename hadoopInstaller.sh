@@ -9,6 +9,7 @@ Pwd="$Pwd/$relativePath"
 #configure ssh
 ssh-keygen -t rsa -P “”
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+ssh-copy-id localhost
 cd $Pwd
 #add in bashrc
 suffix="/bin/javac"
