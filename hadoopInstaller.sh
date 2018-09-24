@@ -6,6 +6,10 @@ y=$(basename $1)
 relativePath="$2${y%"$suffix"}"
 Pwd=$(pwd)
 Pwd="$Pwd/$relativePath"
+#configure ssh
+ssh-keygen -t rsa -P “”
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+cd $Pwd
 #add in bashrc
 suffix="/bin/javac"
 java_home=$(readlink -f $(which javac))
@@ -32,20 +36,20 @@ coreSiteLoc="$hadoopFiles/core-site.xml"
 sed -i "s@</configuration>@$coreSite@" $coreSiteLoc
 echo "core-site.xml done"
 yarnSite="<property> \
- <name>yarn.nodemanager.aux-services<\/name> \
- <value>mapreduce_shuffle<\/value> \
+ <name>yarn.nodemanager.aux-services<\/name> \
+ <value>mapreduce_shuffle<\/value> \
 <\/property> \
 <property> \
- <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class<\/name> \
- <value>org.apache.hadoop.mapred.ShuffleHandler<\/value> \
+ <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class<\/name> \
+ <value>org.apache.hadoop.mapred.ShuffleHandler<\/value> \
 <\/property><\/configuration>"
 yarnSiteLoc="$hadoopFiles/yarn-site.xml"
 sed -i "s@</configuration>@$yarnSite@" $yarnSiteLoc
 echo "yarn-site.xml done"
 mv "$hadoopFiles/mapred-site.xml.template" "$hadoopFiles/mapred-site.xml"
 mapredSite="<property> \
- <name>mapreduce.framework.name<\/name> \
- <value>yarn<\/value> \
+ <name>mapreduce.framework.name<\/name> \
+ <value>yarn<\/value> \
 <\/property><\/configuration>"
 mapredSiteLoc="$hadoopFiles/mapred-site.xml"
 sed -i "s@</configuration>@$mapredSite@" $mapredSiteLoc
@@ -53,16 +57,16 @@ echo "mared-site.xml done"
 mkdir -p ~/mydata/hdfs/namenode
 mkdir -p ~/mydata/hdfs/datanode
 hdfsSite="<property> \
- <name>dfs.replication<\/name> \
- <value>1<\/value> \
+ <name>dfs.replication<\/name> \
+ <value>1<\/value> \
 <\/property> \
 <property> \
- <name>dfs.namenode.name.dir<\/name> \
- <value>file:\/home\/$(whoami)\/mydata\/hdfs\/namenode<\/value> \
+ <name>dfs.namenode.name.dir<\/name> \
+ <value>file:\/home\/$(whoami)\/mydata\/hdfs\/namenode<\/value> \
 <\/property> \
 <property> \
- <name>dfs.datanode.data.dir<\/name> \
- <value>file:\/home\/$(whoami)\/mydata\/hdfs\/datanode<\/value> \
+ <name>dfs.datanode.data.dir<\/name> \
+ <value>file:\/home\/$(whoami)\/mydata\/hdfs\/datanode<\/value> \
 <\/property></configuration>"
 hdfsSiteLoc="$hadoopFiles/hdfs-site.xml"
 sed -i "s@</configuration>@$hdfsSite@" $hdfsSiteLoc
