@@ -3,10 +3,10 @@ tar xf $1 -C $2
 echo "$1 untared"
 suffix=".tar.gz"
 y=$(basename $1)
-relativePath="$2${y%"$suffix"}"
+y=${y%"$suffix"}
+relativePath="$2$y"
 Pwd=$(pwd)
 Pwd="$Pwd/$relativePath"
-echo $Pwd
 #configure ssh
 ssh-keygen -t rsa -P ""
 echo "keygen done"
@@ -22,8 +22,8 @@ java_home=$(readlink -f $(which javac))
 java_home=${java_home%"$suffix"}
 echo $java_home
 #bashrcString=
-echo -e "export HADOOP_INSTALL=$Pwd \n export JAVA_HOME=$java_home" >> ~/.bashrc
-bashrcString="export PATH=\$PATH:\$HADOOP_INSTALL/bin \n
+bashrcString="export HADOOP_INSTALL=$Pwd \n export JAVA_HOME=$java_home \n
+export PATH=\$PATH:\$HADOOP_INSTALL/bin \n
 export PATH=\$PATH:\$HADOOP_INSTALL/sbin \n
 export HADOOP_MAPRED_HOME=\$HADOOP_INSTALL \n
 export HADOOP_COMMON_HOME=\$HADOOP_INSTALL \n
@@ -37,7 +37,7 @@ hadoopEnvLoc="$hadoopFiles/hadoop-env.sh"
 sed -i "s@export JAVA_HOME=\${JAVA_HOME}@export JAVA_HOME=$java_home@" $hadoopEnvLoc
 echo "hadoop-env.h done"
 coreSite="<property> \
-<name>fs.default.name<\/name><value>hdfs:\/\/localhost:9000<\/value><\/property><\/configuration>"
+<name>fs.default.name<\/name><value>hdfs:\/\/$(whoami):9000<\/value><\/property><\/configuration>"
 coreSiteLoc="$hadoopFiles/core-site.xml"
 sed -i "s@</configuration>@$coreSite@" $coreSiteLoc
 echo "core-site.xml done"
@@ -67,13 +67,55 @@ hdfsSite="<property> \
  <value>1<\/value> \
 <\/property> \
 <property> \
- <name>dfs.namenode.name.dir<\/name> \
- <value>file:\/home\/$(whoami)\/mydata\/hdfs\/namenode<\/value> \
-<\/property> \
-<property> \
  <name>dfs.datanode.data.dir<\/name> \
  <value>file:\/home\/$(whoami)\/mydata\/hdfs\/datanode<\/value> \
 <\/property></configuration>"
 hdfsSiteLoc="$hadoopFiles/hdfs-site.xml"
 sed -i "s@</configuration>@$hdfsSite@" $hdfsSiteLoc
 echo "hdfs-site done"
+
+count=1
+newPwd=${Pwd%"$y"}
+for i in "$@" ; do
+	if [ $count -le 2 ]
+	then
+		count=$((count+1))
+		continue
+	fi
+	ssh-copy-id -i "$i"
+	scp -r $Pwd $(whoami)@"$i":$newPwd
+	count=$((count+1))
+done
+
+numberOfOptions="$#"
+numberOfSlaves=$((numberOfOptions-2))
+sed -i "s@1@$numberOfSlaves@" $hdfsSiteLoc
+yarnAppendString="<property> \
+                                  <name>yarn.resourcemanager.resource-tracker.address<\/name> \
+                                  <value>$(whoami):8025<\/value> \
+                       <\/property> \
+                       <property> \
+                                  <name>yarn.resourcemanager.scheduler.address<\/name> \
+                                  <value>$(whoami):8030<\/value> \
+                       <\/property> \
+                       <property> \
+                                  <name>yarn.resourcemanager.address<\/name> \
+                                  <value>$(whoami):8050<\/value> \
+                       <\/property><\/configuration>"
+sed -i "s@</configuration>@$yarnAppendString@" $yarnSiteLoc
+sed -i "s@mapreduce.framework.name@mapred.job.tracker@" $mapredSiteLoc
+sed -i "s@yarn@$(whoami):54311@" $mapredSiteLoc
+sed -i "s@datanode@namenode@" $hdfsSiteLoc
+
+echo "" > "$hadoopFiles/slaves"
+count=1
+for i in "$@" ; do
+	if [ $count -le 2 ] 
+	then
+		count=$((count+1))
+		continue
+	fi
+	echo "$i" >> "$hadoopFiles/slaves"
+	ssh -t "$i" "mkdir -p ~/mydata/hdfs/datanode;$(echo -e $bashrcString >> ~/.bashrc;source ~/.bashrc)"
+	count=$((count+1))
+done
