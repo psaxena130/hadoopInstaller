@@ -29,7 +29,7 @@ export HADOOP_MAPRED_HOME=\$HADOOP_INSTALL \n
 export HADOOP_COMMON_HOME=\$HADOOP_INSTALL \n
 export HADOOP_HDFS_HOME=\$HADOOP_INSTALL \n
 export YARN_HOME=\$HADOOP_INSTALL"
-
+masterName=$(cat /etc/hostname)
 echo -e $bashrcString >> ~/.bashrc
 source ~/.bashrc
 hadoopFiles="$Pwd/etc/hadoop"
@@ -37,7 +37,7 @@ hadoopEnvLoc="$hadoopFiles/hadoop-env.sh"
 sed -i "s@export JAVA_HOME=\${JAVA_HOME}@export JAVA_HOME=$java_home@" $hadoopEnvLoc
 echo "hadoop-env.h done"
 coreSite="<property> \
-<name>fs.default.name<\/name><value>hdfs:\/\/$(whoami):9000<\/value><\/property><\/configuration>"
+<name>fs.default.name<\/name><value>hdfs:\/\/$masterName:9000<\/value><\/property><\/configuration>"
 coreSiteLoc="$hadoopFiles/core-site.xml"
 sed -i "s@</configuration>@$coreSite@" $coreSiteLoc
 echo "core-site.xml done"
@@ -92,19 +92,19 @@ numberOfSlaves=$((numberOfOptions-2))
 sed -i "s@1@$numberOfSlaves@" $hdfsSiteLoc
 yarnAppendString="<property> \
                                   <name>yarn.resourcemanager.resource-tracker.address<\/name> \
-                                  <value>$(whoami):8025<\/value> \
+                                  <value>$masterName:8025<\/value> \
                        <\/property> \
                        <property> \
                                   <name>yarn.resourcemanager.scheduler.address<\/name> \
-                                  <value>$(whoami):8030<\/value> \
+                                  <value>$masterName:8030<\/value> \
                        <\/property> \
                        <property> \
                                   <name>yarn.resourcemanager.address<\/name> \
-                                  <value>$(whoami):8050<\/value> \
+                                  <value>$masterName:8050<\/value> \
                        <\/property><\/configuration>"
 sed -i "s@</configuration>@$yarnAppendString@" $yarnSiteLoc
 sed -i "s@mapreduce.framework.name@mapred.job.tracker@" $mapredSiteLoc
-sed -i "s@yarn@$(whoami):54311@" $mapredSiteLoc
+sed -i "s@yarn@$masterName:54311@" $mapredSiteLoc
 sed -i "s@datanode@namenode@" $hdfsSiteLoc
 
 echo "" > "$hadoopFiles/slaves"
