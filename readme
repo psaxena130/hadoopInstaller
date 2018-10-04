@@ -1,6 +1,15 @@
-The first input is the location of TAR file.
-The second input is the location where the the file need to be untared.
-Then run the script.
+The first input is the relative location of TAR file.
+The second input is the relative location where the the file need to be untared.
+Other options are the IP Address of Slaves.
+
+For example:
+Present Directory is /home/pranav/Desktop/hadoopInstaller
+Tar file is present in /home/pranav/Desktop/Hadoop/hadoop-2.6.0.tar.gz
+We want to install at /home/pranav/Desktop/
+IP of slave is 192.168.1.4
+Run: ./multiNodeInstaller.sh ../Hadoop/hadoop-2.6.0.tar.gz ../ 192.168.1.4
+
+After running script:
 hdfs namenode -format
 start-all.sh
 jps
